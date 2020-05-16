@@ -28,14 +28,15 @@ raw_data_loc = os.path.join(scraper_directory, raw_data_relative, ay_term_file_r
 
 
 template = {
-    "name": None,
-    "au": None,
-    "pre-requisite": None,
-    "mutually_exclusive":None,
-    "not_available":None,
+    "name": "",
+    "au": "",
+    "pre-requisite": "",
+    "mutually_exclusive": "",
+    "not_available": "",
     "grade_type": "graded",
-    "not_available_spec":None,
-    "description":None
+    "not_available_spec": "",
+    "non_core_to": "",
+    "description": "" 
 }
 
 file_temp = {
@@ -59,7 +60,7 @@ Ignore the first 4 lines of the header which is written as td
 |-----------|-----|---|--------------------------|
 
 '''
-mods = mods[4:]
+mods = mods[4:1000]
 
 '''
 JSON file will be following this template
@@ -83,26 +84,34 @@ storage = {}
 idx = 0
 current_mod = {}
 start = True
-
+prev = None
 # s = mods[13:20]
 # for line in s:
 #     print(line.string)
+
 
 while (idx < len(mods)):
     try:
         line = mods[idx]
     except:
-        print("Ended!")
+        print("Error!")
 
     if start:
         try:
-            code = str(line.string)
+            text = line.string
+            while text == "None" or text == nbsp or text == None:
+                idx += 1
+                text = mods[idx].string
+            code = str(text)
             name = str(mods[idx+1].string)
             au = str(mods[idx+2].string)
             department = str(mods[idx+3].string)
+            if department != prev:
+                print(code, name, au, department, idx)
+                prev = department
         except IndexError:
             print("There's an IndexError at the start, most likely missed testcase below.")
-
+            break
         # Declare the value in the key as a dictionary
         if department not in storage:
             storage[department] = {}
@@ -118,90 +127,50 @@ while (idx < len(mods)):
 
     else:
         text = line.string
-
         if text == "Prerequisite:":
+            req_string = ""
             idx += 1
-            current_mod['pre-requisite'] = str(mods[idx].string)
+            text = mods[idx].string
+            while "OR" in text:
+                req_string = req_string + text
+                idx += 2
+                text = mods[idx].string
+
+            req_string = req_string + text
+            req_string = req_string.replace("OR", "")
+            current_mod['pre-requisite'] += str(req_string)
 
         elif text == "None" or text == nbsp or text == None:
             pass
 
         elif text == "Mutually exclusive with: ":
             idx += 1
-            current_mod['mutually_exclusive'] = str(mods[idx].string)
+            current_mod['mutually_exclusive'] += str(mods[idx].string)
 
         elif text == "Not available to Programme: ":
             idx += 1
-            current_mod['not_available'] = str(mods[idx].string)
+            current_mod['not_available'] += str(mods[idx].string)
             
         elif text == "Grade Type: ":
             idx += 1
-            current_mod['grade_type'] = str(mods[idx].string)
+            current_mod['grade_type'] += str(mods[idx].string)
 
         elif text == "Not available to all Programme with: ":
             idx += 1
-            current_mod['not_available_spec'] = str(mods[idx].string)
+            current_mod['not_available_spec'] += str(mods[idx].string)
+            
+        elif text == "Not available as Core to Programme: ":
+            idx += 1
+            current_mod['non_core_to'] += str(mods[idx].string)
 
         # Description
         else:
-            current_mod['description'] = str(mods[idx].string)
+            current_mod['description'] += str(mods[idx].string)
             start = True
 
         idx += 1
 
+
 with open(storage_location, "w+") as write_file:
     json.dump(storage, write_file)
     print("Done!")
-
-# for mod in mods:
-#     mod_data = mod.find_all("td")
-#     code = mod_data[0].string
-#     name = mod_data[1].string
-#     au = mod_data[2].string
-#     mutually_exclusive = None
-#     not_available = None
-#     not_available_spec = None
-#     grade_type = "Graded"
-#     description = None
-
-#     # Skip 3 and 4 as they will return None
-#     for i in range(5, len(mod_data)):
-#         line = mod_data[i]
-#         if line.string == "Mutually exclusive with: ":
-#             i += 1
-#             mutually_exclusive = mod_data[i].string
-#             continue
-
-#         elif line.string == "Not available to Programme: ":
-#             i += 1
-#             not_available = mod_data[i].string
-#             continue
-
-#         elif line.string == "Not available to all Programme with: ":
-#             i += 1
-#             not_available_spec = mod_data[i].string
-#             continue
-
-#         elif line.string == "Grade Type: ":
-#             i += 1
-#             grade_type = mod_data[i].string
-#             continue
-        
-#         # Assume it is a description
-#         else:
-#             description = line.string
-#             continue
-#     temp = {
-#         "name": str(name),
-#         "au": str(au),
-#         "mutually_exclusive": str(mutually_exclusive),
-#         "not_available": str(not_available),
-#         "grade_type": str(grade_type),
-#         "not_available_spec": str(not_available_spec),
-#         "description": str(description),
-#     }
-#     storage[code] = temp
-
-# print(type(""))
-# with open(storage_location, "w") as write_file:
-#     json.dump(storage, write_file)
