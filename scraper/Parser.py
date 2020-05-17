@@ -25,6 +25,7 @@ for filename in os.listdir(content_of_courses_raw_path):
 				elif tag.text != 'Mutually exclusive with: ' and \
 						tag.text != 'Not available to Programme: ' and \
 						tag.text != 'Not available to all Programme with: ' and \
+						tag.text != 'Not available as Core to Programme: ' and \
 						tag.text != 'Prerequisite:' and \
 						tag.text != 'Grade Type: ' and \
 						tag.text != '\xa0' and \
@@ -37,7 +38,9 @@ for filename in os.listdir(content_of_courses_raw_path):
 						'au': None,
 						'program': None,
 						'mutually_exclusive': None,
-						'not_available': None,
+						'not_available_to_program': None,
+						'not_available_to_program_with': None,
+						'not_available_as_core_to_program': None,
 						'prerequisite': None,
 						'grade_type': None,
 					}
@@ -56,9 +59,11 @@ for filename in os.listdir(content_of_courses_raw_path):
 				elif first_tag_text == 'Mutually exclusive with: ':
 					dict_of_courses[course_code]['mutually_exclusive'] = tag.text
 				elif first_tag_text == 'Not available to Programme: ':
-					dict_of_courses[course_code]['not_available'] = tag.text
+					dict_of_courses[course_code]['not_available_to_program'] = tag.text
 				elif first_tag_text == 'Not available to all Programme with: ':
-					dict_of_courses[course_code]['not_available_spec'] = tag.text
+					dict_of_courses[course_code]['not_available_to_program_with'] = tag.text
+				elif first_tag_text == 'Not available as Core to Programme: ':
+					dict_of_courses[course_code]['not_available_as_core_to_program'] = tag.text
 				elif first_tag_text == 'Prerequisite:' or (first_tag_text == '' and tag.text != ''):
 					if dict_of_courses[course_code].get('prerequisite'):
 						dict_of_courses[course_code]['prerequisite'] += f' {tag.text}'
