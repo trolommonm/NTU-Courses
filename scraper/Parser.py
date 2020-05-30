@@ -42,6 +42,7 @@ for filename in file_list:
 						tag.text != 'Not available as PE to Programme: ' and \
 						tag.text != 'Prerequisite:' and \
 						tag.text != 'Grade Type: ' and \
+						tag.text != 'Remark:' and \
 						tag.text != '\xa0' and \
 						tag.text != '' and \
 						tag.get('colspan') != '4':
@@ -59,6 +60,7 @@ for filename in file_list:
 						'not_available_as_PE_to_program': None,
 						'prerequisite': None,
 						'grade_type': None,
+						'remark': None
 					}
 				elif tag.get('colspan') == '4':
 					dict_of_courses[course_code]['description'] = tr_tag.text
@@ -84,6 +86,8 @@ for filename in file_list:
 					dict_of_courses[course_code]['not_available_as_UE_to_program'] = tag.text
 				elif first_tag_text == 'Not available as PE to Programme: ':
 					dict_of_courses[course_code]['not_available_as_PE_to_program'] = tag.text
+				elif first_tag_text == 'Remark:':
+					dict_of_courses[course_code]['remark'] = tag.text
 				elif first_tag_text == 'Prerequisite:' or (first_tag_text == '' and tag.text != ''):
 					if dict_of_courses[course_code].get('prerequisite'):
 						dict_of_courses[course_code]['prerequisite'] += f' {tag.text}'
