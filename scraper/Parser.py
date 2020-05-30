@@ -2,12 +2,24 @@ from bs4 import BeautifulSoup
 import os
 import json
 
-# currently implemented for Content of Courses only, todo for Class Schedule and Exam Timetable
-
 content_of_courses_raw_path = 'Content of Courses/raw/'
 
-for filename in os.listdir(content_of_courses_raw_path):
-	html = open(os.path.join(content_of_courses_raw_path, filename)).read()
+# to check for hidden files
+if os.name == 'nt':
+    import win32api, win32con
+
+def file_is_hidden(p):
+    if os.name== 'nt':
+        attribute = win32api.GetFileAttributes(p)
+        return attribute & (win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
+    else:
+        return p.startswith('.') #linux-osx
+
+file_list = [f for f in os.listdir(content_of_courses_raw_path) if not file_is_hidden(f)]
+
+# currently implemented for Content of Courses only, todo for Class Schedule and Exam Timetable
+for filename in file_list:
+	html = open(os.path.join(content_of_courses_raw_path, filename), 'r').read()
 
 	dict_of_courses = {}
 	soup = BeautifulSoup(html.replace('\n', ''), 'lxml')
@@ -26,6 +38,8 @@ for filename in os.listdir(content_of_courses_raw_path):
 						tag.text != 'Not available to Programme: ' and \
 						tag.text != 'Not available to all Programme with: ' and \
 						tag.text != 'Not available as Core to Programme: ' and \
+						tag.text != 'Not available as UE to Programme: ' and \
+						tag.text != 'Not available as PE to Programme: ' and \
 						tag.text != 'Prerequisite:' and \
 						tag.text != 'Grade Type: ' and \
 						tag.text != '\xa0' and \
@@ -39,8 +53,10 @@ for filename in os.listdir(content_of_courses_raw_path):
 						'program': None,
 						'mutually_exclusive': None,
 						'not_available_to_program': None,
-						'not_available_to_program_with': None,
+						'not_available_to_all_program_with': None,
 						'not_available_as_core_to_program': None,
+						'not_available_as_UE_to_program': None,
+						'not_available_as_PE_to_program': None,
 						'prerequisite': None,
 						'grade_type': None,
 					}
@@ -61,9 +77,13 @@ for filename in os.listdir(content_of_courses_raw_path):
 				elif first_tag_text == 'Not available to Programme: ':
 					dict_of_courses[course_code]['not_available_to_program'] = tag.text
 				elif first_tag_text == 'Not available to all Programme with: ':
-					dict_of_courses[course_code]['not_available_to_program_with'] = tag.text
+					dict_of_courses[course_code]['not_available_to_all_program_with'] = tag.text
 				elif first_tag_text == 'Not available as Core to Programme: ':
 					dict_of_courses[course_code]['not_available_as_core_to_program'] = tag.text
+				elif first_tag_text == 'Not available as UE to Programme: ':
+					dict_of_courses[course_code]['not_available_as_UE_to_program'] = tag.text
+				elif first_tag_text == 'Not available as PE to Programme: ':
+					dict_of_courses[course_code]['not_available_as_PE_to_program'] = tag.text
 				elif first_tag_text == 'Prerequisite:' or (first_tag_text == '' and tag.text != ''):
 					if dict_of_courses[course_code].get('prerequisite'):
 						dict_of_courses[course_code]['prerequisite'] += f' {tag.text}'
